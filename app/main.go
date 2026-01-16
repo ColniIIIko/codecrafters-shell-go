@@ -7,17 +7,18 @@ import (
 )
 
 func main() {
-	fmt.Print("$ ")
-
 	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
 
-	command := scanner.Text()
+	fmt.Print("$ ")
+	for scanner.Scan() {
+		command := scanner.Text()
 
-	if err := scanner.Err(); err != nil {
-		fmt.Print("fail to read input")
-		return
+		if err := scanner.Err(); err != nil {
+			fmt.Print("fail to read input")
+			os.Exit(1)
+		}
+
+		fmt.Printf("%s: command not found\n", command)
+		fmt.Print("$ ")
 	}
-
-	fmt.Printf("%s: command not found\n", command)
 }
