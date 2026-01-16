@@ -12,21 +12,36 @@ type command struct {
 	execute func(arg string) error
 }
 
-var knownCommand = map[string]command{
-	"exit": {
+var knownCommand map[string]command
+
+func init() {
+	knownCommand = make(map[string]command)
+
+	knownCommand["exit"] = command{
 		name: "exit",
 		execute: func(arg string) error {
 			os.Exit(0)
 			return nil
 		},
-	},
-	"echo": {
+	}
+	knownCommand["echo"] = command{
 		name: "echo",
 		execute: func(arg string) error {
 			fmt.Println(arg)
 			return nil
 		},
-	},
+	}
+	knownCommand["type"] = command{
+		name: "type",
+		execute: func(arg string) error {
+			if _, exists := knownCommand[arg]; exists {
+				fmt.Printf("%s is a shell builtin\n", arg)
+			} else {
+				fmt.Printf("%s: not found")
+			}
+			return nil
+		},
+	}
 }
 
 func handleCommand(command string, arg string) error {
