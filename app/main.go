@@ -12,6 +12,11 @@ type command struct {
 	execute func(arg string) error
 }
 
+type commandInput struct {
+	command string
+	arg     string
+}
+
 var knownCommand map[string]command
 
 func init() {
@@ -34,10 +39,12 @@ func init() {
 	knownCommand["type"] = command{
 		name: "type",
 		execute: func(arg string) error {
-			if _, exists := knownCommand[arg]; exists {
-				fmt.Printf("%s is a shell builtin\n", arg)
-			} else {
-				fmt.Printf("%s: not found")
+			for command := range strings.SplitSeq(arg, " ") {
+				if _, exists := knownCommand[command]; exists {
+					fmt.Printf("%s is a shell builtin\n", command)
+				} else {
+					fmt.Printf("%s: not found\n", command)
+				}
 			}
 			return nil
 		},
@@ -61,7 +68,7 @@ func printPrompt() {
 	fmt.Print("$ ")
 }
 
-func readInput(scanner *bufio.Scanner) (string, string) {
+func readInput(scanner *bufio.Scanner) *commandInput {
 	scanner.Scan()
 	input := scanner.Text()
 	input = strings.Trim(input, " ")
@@ -69,20 +76,28 @@ func readInput(scanner *bufio.Scanner) (string, string) {
 	var command string
 	var arg string
 
-	sepIndex := strings.Index(input, " ")
-	if sepIndex == -1 {
-		command = input
-		arg = ""
-	} else {
-		command = input[:sepIndex]
-		arg = input[(sepIndex + 1):]
+	inputArray := strings.Split(input, " ")
+
+	if len(inputArray) == 0 {
+		return nil
+	}
+	if len(inputArray) > 0 {
+		command = inputArray[0]
+		if command == "" {
+			return nil
+		}
+	}
+	if len(inputArray) > 1 {
+		arg = strings.Join(inputArray[1:], " ")
 	}
 
 	if err := scanner.Err(); err != nil {
 		fmt.Printf("Error reading command: %s", err)
 		os.Exit(1)
 	}
-	return command, arg
+	return &commandInput{
+		command, arg,
+	}
 }
 
 func main() {
@@ -90,7 +105,10 @@ func main() {
 
 	for {
 		printPrompt()
-		command, arg := readInput(scanner)
-		handleCommand(command, arg)
+		commandInput := readInput(scanner)
+		if commandInput == nil {
+			continue
+		}
+		handleCommand(commandInput.command, commandInput.arg)
 	}
 }
