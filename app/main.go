@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 )
@@ -23,6 +24,28 @@ type commandInput struct {
 }
 
 var knownCommand map[string]command
+
+func executablePath(executable string) (string, error) {
+	if isExecutable(executable) {
+		return executable, nil
+	}
+
+	pathEnvValue, exists := os.LookupEnv(PATH_ENV)
+
+	if !exists {
+		return "", fmt.Errorf("PATH env not found")
+	}
+
+	for pathValue := range strings.SplitSeq(pathEnvValue, string(os.PathListSeparator)) {
+		fullPath := path.Join(pathValue, executable)
+
+		if isExecutable(fullPath) {
+			return fullPath, nil
+		}
+	}
+
+	return "", fmt.Errorf("%s: not found", executable)
+}
 
 func isExecutable(path string) bool {
 	info, err := os.Stat(path)
@@ -63,28 +86,13 @@ func init() {
 				if _, exists := knownCommand[command]; exists {
 					fmt.Printf("%s is a shell builtin\n", command)
 				} else {
-					pathEnvValue, exists := os.LookupEnv(PATH_ENV)
+					fullPath, err := executablePath(command)
 
-					if !exists {
+					if err != nil {
 						fmt.Printf("%s: not found\n", command)
-						continue
+					} else {
+						fmt.Printf("%s is %s\n", command, fullPath)
 					}
-
-					existsInPath := false
-					for pathValue := range strings.SplitSeq(pathEnvValue, string(os.PathListSeparator)) {
-						fullPath := path.Join(pathValue, arg)
-
-						if isExecutable(fullPath) {
-							fmt.Printf("%s is %s\n", command, fullPath)
-							existsInPath = true
-							break
-						}
-					}
-
-					if !existsInPath {
-						fmt.Printf("%s: not found\n", command)
-					}
-
 				}
 			}
 			return nil
@@ -98,6 +106,22 @@ func handleCommand(command string, arg string) error {
 			fmt.Printf("Error executing command: %s", err)
 			return err
 		}
+	} else if execPath, err := executablePath(command); err == nil {
+		execCommand := execPath
+
+		if path.IsAbs(execPath) {
+			execCommand = command
+		}
+
+		cmd := exec.Command(execCommand, strings.Split(arg, " ")...)
+		out, err := cmd.Output()
+		if err != nil {
+			fmt.Printf("Error running %s: %s\nOutput: %s", command, err, string(out))
+			return err
+		}
+
+		fmt.Print(string(out))
+
 	} else {
 		fmt.Printf("%s: command not found\n", command)
 	}
