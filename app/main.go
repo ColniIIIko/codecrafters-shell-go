@@ -4,7 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"strings"
+)
+
+const (
+	PATH_ENV = "PATH"
 )
 
 type command struct {
@@ -18,6 +23,17 @@ type commandInput struct {
 }
 
 var knownCommand map[string]command
+
+func isExecutable(path string) bool {
+	info, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	mode := info.Mode()
+	return mode.IsRegular() && (mode.Perm()&0111 != 0)
+}
 
 func init() {
 	knownCommand = make(map[string]command)
@@ -40,10 +56,35 @@ func init() {
 		name: "type",
 		execute: func(arg string) error {
 			for command := range strings.SplitSeq(arg, " ") {
+				if command == "" {
+					continue
+				}
+
 				if _, exists := knownCommand[command]; exists {
 					fmt.Printf("%s is a shell builtin\n", command)
 				} else {
-					fmt.Printf("%s: not found\n", command)
+					pathEnvValue, exists := os.LookupEnv(PATH_ENV)
+
+					if !exists {
+						fmt.Printf("%s: not found\n", command)
+						continue
+					}
+
+					existsInPath := false
+					for pathValue := range strings.SplitSeq(pathEnvValue, string(os.PathListSeparator)) {
+						fullPath := path.Join(pathValue, arg)
+
+						if isExecutable(fullPath) {
+							fmt.Printf("%s is %s\n", command, fullPath)
+							existsInPath = true
+							break
+						}
+					}
+
+					if !existsInPath {
+						fmt.Printf("%s: not found\n", command)
+					}
+
 				}
 			}
 			return nil
