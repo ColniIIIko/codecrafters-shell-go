@@ -98,6 +98,22 @@ func init() {
 			return nil
 		},
 	}
+
+	knownCommand["pwd"] = command{
+		name: "pwd",
+		execute: func(arg string) error {
+			pwd, err := os.Getwd()
+
+			if err != nil {
+				fmt.Printf("pwd error: %s\n", err)
+				return err
+			}
+
+			fmt.Printf("%s\n", pwd)
+
+			return nil
+		},
+	}
 }
 
 func handleCommand(command string, arg string) error {
@@ -121,7 +137,6 @@ func handleCommand(command string, arg string) error {
 		}
 
 		fmt.Print(string(out))
-
 	} else {
 		fmt.Printf("%s: command not found\n", command)
 	}
