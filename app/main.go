@@ -114,6 +114,30 @@ func init() {
 			return nil
 		},
 	}
+
+	knownCommand["cd"] = command{
+		name: "cd",
+		execute: func(arg string) error {
+
+			var path string
+
+			// if arg == "~" {
+			// 	path, err = os.UserHomeDir()
+			// } else if strings.HasPrefix(arg, "./")
+
+			if strings.HasPrefix(arg, "/") {
+				path = arg
+			}
+
+			err := os.Chdir(path)
+
+			if err != nil {
+				fmt.Printf("cd: %s: No such file or directory\n", arg)
+			}
+
+			return nil
+		},
+	}
 }
 
 func handleCommand(command string, arg string) error {
