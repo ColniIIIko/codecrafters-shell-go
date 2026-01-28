@@ -130,6 +130,10 @@ func init() {
 			} else if strings.HasPrefix(arg, "./") || strings.HasPrefix(arg, "../") {
 				curPath, _ := os.Getwd()
 				resPath = path.Join(curPath, arg)
+			} else if strings.HasPrefix(arg, "~") {
+				homePath, _ := os.UserHomeDir()
+				nextPath, _ := strings.CutSuffix(arg, "~")
+				resPath = path.Join(homePath, nextPath)
 			}
 
 			err := os.Chdir(resPath)
