@@ -119,17 +119,20 @@ func init() {
 		name: "cd",
 		execute: func(arg string) error {
 
-			var path string
+			var resPath string
 
 			// if arg == "~" {
-			// 	path, err = os.UserHomeDir()
+			// 	resPath, err = os.UserHomeDir()
 			// } else if strings.HasPrefix(arg, "./")
 
 			if strings.HasPrefix(arg, "/") {
-				path = arg
+				resPath = arg
+			} else if strings.HasPrefix(arg, "./") || strings.HasPrefix(arg, "../") {
+				curPath, _ := os.Getwd()
+				resPath = path.Join(curPath, arg)
 			}
 
-			err := os.Chdir(path)
+			err := os.Chdir(resPath)
 
 			if err != nil {
 				fmt.Printf("cd: %s: No such file or directory\n", arg)
