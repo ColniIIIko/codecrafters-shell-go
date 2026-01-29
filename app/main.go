@@ -7,160 +7,117 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+
+	"github.com/codecrafters-io/shell-starter-go/app/cmd"
+	shell "github.com/codecrafters-io/shell-starter-go/app/cmd"
+	"github.com/codecrafters-io/shell-starter-go/app/utils"
 )
 
-const (
-	PATH_ENV = "PATH"
-)
-
-type command struct {
-	name    string
-	execute func(arg string) error
-}
+const QUOTE = '\''
 
 type commandInput struct {
 	command string
 	arg     string
 }
 
-var knownCommand map[string]command
-
-func executablePath(executable string) (string, error) {
-	if isExecutable(executable) {
-		return executable, nil
-	}
-
-	pathEnvValue, exists := os.LookupEnv(PATH_ENV)
-
-	if !exists {
-		return "", fmt.Errorf("PATH env not found")
-	}
-
-	for pathValue := range strings.SplitSeq(pathEnvValue, string(os.PathListSeparator)) {
-		fullPath := path.Join(pathValue, executable)
-
-		if isExecutable(fullPath) {
-			return fullPath, nil
-		}
-	}
-
-	return "", fmt.Errorf("%s: not found", executable)
-}
-
-func isExecutable(path string) bool {
-	info, err := os.Stat(path)
-
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	mode := info.Mode()
-	return mode.IsRegular() && (mode.Perm()&0111 != 0)
-}
+var knownCommand utils.Shell
 
 func init() {
-	knownCommand = make(map[string]command)
+	knownCommand = make(utils.Shell)
 
-	knownCommand["exit"] = command{
-		name: "exit",
-		execute: func(arg string) error {
-			os.Exit(0)
-			return nil
+	knownCommand["exit"] = utils.Command{
+		Name: "exit",
+		Execute: func(args []string, ctx utils.Shell) error {
+			return shell.Exit(args, ctx)
 		},
 	}
-	knownCommand["echo"] = command{
-		name: "echo",
-		execute: func(arg string) error {
-			fmt.Println(arg)
-			return nil
+	knownCommand["echo"] = utils.Command{
+		Name: "echo",
+		Execute: func(args []string, ctx utils.Shell) error {
+			return shell.Echo(args, ctx)
 		},
 	}
-	knownCommand["type"] = command{
-		name: "type",
-		execute: func(arg string) error {
-			for command := range strings.SplitSeq(arg, " ") {
-				if command == "" {
-					continue
-				}
-
-				if _, exists := knownCommand[command]; exists {
-					fmt.Printf("%s is a shell builtin\n", command)
-				} else {
-					fullPath, err := executablePath(command)
-
-					if err != nil {
-						fmt.Printf("%s: not found\n", command)
-					} else {
-						fmt.Printf("%s is %s\n", command, fullPath)
-					}
-				}
-			}
-			return nil
+	knownCommand["type"] = utils.Command{
+		Name: "type",
+		Execute: func(args []string, ctx utils.Shell) error {
+			return shell.Type(args, ctx)
 		},
 	}
 
-	knownCommand["pwd"] = command{
-		name: "pwd",
-		execute: func(arg string) error {
-			pwd, err := os.Getwd()
-
-			if err != nil {
-				fmt.Printf("pwd error: %s\n", err)
-				return err
-			}
-
-			fmt.Printf("%s\n", pwd)
-
-			return nil
+	knownCommand["pwd"] = utils.Command{
+		Name: "pwd",
+		Execute: func(args []string, ctx utils.Shell) error {
+			return cmd.Pwd(args, ctx)
 		},
 	}
 
-	knownCommand["cd"] = command{
-		name: "cd",
-		execute: func(arg string) error {
-
-			var resPath string
-
-			// if arg == "~" {
-			// 	resPath, err = os.UserHomeDir()
-			// } else if strings.HasPrefix(arg, "./")
-
-			if strings.HasPrefix(arg, "/") {
-				resPath = arg
-			} else if strings.HasPrefix(arg, "./") || strings.HasPrefix(arg, "../") {
-				curPath, _ := os.Getwd()
-				resPath = path.Join(curPath, arg)
-			} else if strings.HasPrefix(arg, "~") {
-				homePath, _ := os.UserHomeDir()
-				nextPath, _ := strings.CutSuffix(arg, "~")
-				resPath = path.Join(homePath, nextPath)
-			}
-
-			err := os.Chdir(resPath)
-
-			if err != nil {
-				fmt.Printf("cd: %s: No such file or directory\n", arg)
-			}
-
-			return nil
+	knownCommand["cd"] = utils.Command{
+		Name: "cd",
+		Execute: func(args []string, ctx utils.Shell) error {
+			return cmd.Cd(args, ctx)
 		},
 	}
 }
 
-func handleCommand(command string, arg string) error {
+func parseArg(arg string) []string {
+	insideQuotes := false
+	groups := make([]string, 0)
+
+	group := ""
+
+	index := 0
+
+	for index < len(arg) {
+		if arg[index] == QUOTE && index+1 != len(arg) && arg[index+1] == QUOTE {
+			index += 2
+			continue
+		}
+
+		if !insideQuotes && arg[index] == QUOTE {
+			insideQuotes = true
+		} else if insideQuotes && arg[index] == QUOTE {
+			if group != "" {
+				groups = append(groups, group)
+				group = ""
+			}
+			insideQuotes = false
+		} else if insideQuotes || arg[index] != ' ' {
+			group += string(arg[index])
+		} else if !insideQuotes && arg[index] == ' ' && len(group) > 0 {
+			groups = append(groups, group)
+			group = ""
+		}
+
+		index += 1
+	}
+
+	if group != " " && group != "" {
+		groups = append(groups, group)
+	}
+
+	if insideQuotes {
+		// has only opening quote
+		return []string{arg}
+	}
+
+	return groups
+}
+
+func handleCommand(command string, args []string) error {
 	if cmd, exists := knownCommand[command]; exists {
-		if err := cmd.execute(arg); err != nil {
+
+		if err := cmd.Execute(args, knownCommand); err != nil {
 			fmt.Printf("Error executing command: %s", err)
 			return err
 		}
-	} else if execPath, err := executablePath(command); err == nil {
+	} else if execPath, err := utils.ExecutablePath(command); err == nil {
 		execCommand := execPath
 
 		if path.IsAbs(execPath) {
 			execCommand = command
 		}
 
-		cmd := exec.Command(execCommand, strings.Split(arg, " ")...)
+		cmd := exec.Command(execCommand, args...)
 		out, err := cmd.Output()
 		if err != nil {
 			fmt.Printf("Error running %s: %s\nOutput: %s", command, err, string(out))
@@ -220,6 +177,7 @@ func main() {
 		if commandInput == nil {
 			continue
 		}
-		handleCommand(commandInput.command, commandInput.arg)
+		args := parseArg(commandInput.arg)
+		handleCommand(commandInput.command, args)
 	}
 }
