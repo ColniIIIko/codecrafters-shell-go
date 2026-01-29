@@ -14,6 +14,7 @@ import (
 )
 
 const QUOTE = '\''
+const DOUBLE_QUOTE = '"'
 
 type commandInput struct {
 	command string
@@ -59,7 +60,12 @@ func init() {
 	}
 }
 
+func isQuote(char byte) bool {
+	return char == QUOTE || char == DOUBLE_QUOTE
+}
+
 func parseArg(arg string) []string {
+	quoteType := byte(QUOTE)
 	insideQuotes := false
 	groups := make([]string, 0)
 
@@ -68,14 +74,15 @@ func parseArg(arg string) []string {
 	index := 0
 
 	for index < len(arg) {
-		if arg[index] == QUOTE && index+1 != len(arg) && arg[index+1] == QUOTE {
+		if isQuote(arg[index]) && index+1 != len(arg) && arg[index+1] == arg[index] {
 			index += 2
 			continue
 		}
 
-		if !insideQuotes && arg[index] == QUOTE {
+		if !insideQuotes && isQuote(arg[index]) {
+			quoteType = arg[index]
 			insideQuotes = true
-		} else if insideQuotes && arg[index] == QUOTE {
+		} else if insideQuotes && isQuote(arg[index]) && arg[index] == quoteType {
 			if group != "" {
 				groups = append(groups, group)
 				group = ""
