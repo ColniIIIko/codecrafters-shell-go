@@ -100,7 +100,7 @@ func parseArg(arg string) []string {
 			quoteType = arg[index]
 			insideQuotes = true
 		} else if insideQuotes && isQuote(arg[index]) && arg[index] == quoteType {
-			if group != "" {
+			if group != "" && !(index+1 < len(arg) && arg[index+1] != ' ') {
 				groups = append(groups, group)
 				group = ""
 			}
