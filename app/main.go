@@ -15,6 +15,7 @@ import (
 
 const QUOTE = '\''
 const DOUBLE_QUOTE = '"'
+const BACK_SLASH = '\\'
 
 type commandInput struct {
 	command string
@@ -75,6 +76,12 @@ func parseArg(arg string) []string {
 
 	for index < len(arg) {
 		if isQuote(arg[index]) && index+1 != len(arg) && arg[index+1] == arg[index] {
+			index += 2
+			continue
+		}
+
+		if !insideQuotes && arg[index] == BACK_SLASH && index+1 < len(arg) {
+			group += string(arg[index+1])
 			index += 2
 			continue
 		}
