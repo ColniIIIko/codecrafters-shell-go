@@ -111,7 +111,7 @@ func redirectOutput(output string, redirect core.RedirectOutput, to core.Redirec
 	err := os.WriteFile(path, []byte(output), 0644)
 
 	if err != nil {
-		debug("error redirect output %s\n", err)
+		debug("error redirect output  %s\n", err)
 	}
 }
 
