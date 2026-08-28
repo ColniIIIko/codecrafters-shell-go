@@ -43,3 +43,20 @@ func IsExecutable(path string) bool {
 	mode := info.Mode()
 	return mode.IsRegular() && (mode.Perm()&0111 != 0)
 }
+
+func ResolvePath(p string) string {
+	resPath := ""
+
+	if strings.HasPrefix(p, "/") {
+		resPath = p
+	} else if strings.HasPrefix(p, "./") || strings.HasPrefix(p, "../") {
+		curPath, _ := os.Getwd()
+		resPath = path.Join(curPath, p)
+	} else if strings.HasPrefix(p, "~") {
+		homePath, _ := os.UserHomeDir()
+		nextPath, _ := strings.CutSuffix(p, "~")
+		resPath = path.Join(homePath, nextPath)
+	}
+
+	return resPath
+}

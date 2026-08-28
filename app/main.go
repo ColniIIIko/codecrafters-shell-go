@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/codecrafters-io/shell-starter-go/app/cmd"
@@ -107,16 +106,9 @@ func readInput(scanner *bufio.Scanner) *core.CommandInput {
 }
 
 func redirectOutput(output string, redirect core.RedirectOutput, to core.RedirectConsumer) {
-	pwd, err := os.Getwd()
-
-	if err != nil {
-		debug("error redirect output %s\n", err)
-		return
-	}
-
-	path := filepath.Join(pwd, string(to))
+	path := utils.ResolvePath(string(to))
 	debug("Redirect path=%s\n", path)
-	err = os.WriteFile(path, []byte(output), 0644)
+	err := os.WriteFile(path, []byte(output), 0644)
 
 	if err != nil {
 		debug("error redirect output %s\n", err)
