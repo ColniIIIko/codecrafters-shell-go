@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -73,13 +75,25 @@ func handleCommand(command string, args []string) (string, error) {
 		}
 
 		cmd := exec.Command(execCommand, args...)
-		out, err := cmd.Output()
+		stderr, _ := cmd.StderrPipe()
+		stdout, _ := cmd.StdoutPipe()
+
+		err := cmd.Start()
+
 		if err != nil {
-			fmt.Printf("Error running %s: %s\nOutput: %s", command, err, string(out))
-			return "", err
+			debug("Error running %s: %s\n", command, err)
 		}
 
-		return string(out), nil
+		out, _ := io.ReadAll(stdout)
+		errOut, _ := io.ReadAll(stderr)
+
+		err = cmd.Wait()
+
+		if err != nil {
+			debug("Error running %s: %s\n", command, err)
+		}
+
+		return string(out), errors.New(string(errOut))
 	}
 
 	return fmt.Sprintf("%s: command not found", command), nil
@@ -128,14 +142,19 @@ func main() {
 		if commandInput == nil {
 			continue
 		}
-		out, _ := handleCommand(commandInput.Command, commandInput.Args)
+		out, err := handleCommand(commandInput.Command, commandInput.Args)
 
-		debug("Command Input %s", commandInput)
+		debug("Command Input %s\n", commandInput)
+		debug("Command Output out=%s, err=%s\n", out, err)
 
 		if commandInput.Redirect != "" {
 			redirectOutput(out, commandInput.Redirect, commandInput.RedirectTo)
 		} else {
 			fmt.Print(out)
+		}
+
+		if err != nil {
+			fmt.Println(err)
 		}
 	}
 }
