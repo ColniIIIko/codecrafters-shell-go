@@ -7,15 +7,12 @@ import (
 	"github.com/codecrafters-io/shell-starter-go/app/utils"
 )
 
-func Pwd(args []string, ctx utils.Shell) error {
+func Pwd(args []string, ctx utils.Shell) (string, error) {
 	pwd, err := os.Getwd()
 
 	if err != nil {
-		fmt.Printf("pwd error: %s\n", err)
-		return err
+		return "", fmt.Errorf("pwd error: %s\n", err)
 	}
 
-	fmt.Printf("%s\n", pwd)
-
-	return nil
+	return pwd, nil
 }

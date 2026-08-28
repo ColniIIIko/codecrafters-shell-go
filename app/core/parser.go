@@ -4,20 +4,31 @@ import (
 	"strings"
 )
 
+type RedirectOutput string
+
+const (
+	RedirectOutputOUT RedirectOutput = "stdout"
+	RedirectOutputERR RedirectOutput = "stderr"
+)
+
+type RedirectConsumer string
+
 type CommandInput struct {
-	Command string
-	Arg     string
+	Command    string
+	Args       []string
+	Redirect   RedirectOutput
+	RedirectTo RedirectConsumer
+}
+
+type ArgsParseResponse struct {
+	Args       []string
+	Redirect   RedirectOutput
+	RedirectTo RedirectConsumer
 }
 
 type parseConfig struct {
 	keepBackSlash bool
 }
-
-const QUOTE = '\''
-const DOUBLE_QUOTE = '"'
-const BACK_SLASH = '\\'
-const DOLLAR_SIGN = '$'
-const BACKTICK = '`'
 
 func isQuote(char byte) bool {
 	return char == QUOTE || char == DOUBLE_QUOTE
@@ -88,8 +99,31 @@ func parse(arg string, cfg *parseConfig) []string {
 	return groups
 }
 
-func ParseArg(arg string) []string {
-	return parse(arg, nil)
+func ParseArg(arg string) ArgsParseResponse {
+	args := parse(arg, nil)
+
+	res := ArgsParseResponse{
+		Args: args,
+	}
+
+	index := 0
+	for index < len(args) {
+		arg := args[index]
+
+		if arg == STDOUT_REDIRECT || arg == STDOUT_REDIRECT_NUM {
+			res.Redirect = RedirectOutputOUT
+			res.Args = args[:index]
+			break
+		}
+
+		index++
+	}
+
+	if res.Redirect == RedirectOutputOUT {
+		res.RedirectTo = RedirectConsumer(strings.Join(args[(index+1):], " "))
+	}
+
+	return res
 }
 
 func ParseInput(input string) *CommandInput {
@@ -123,8 +157,9 @@ func ParseInput(input string) *CommandInput {
 			}
 		}
 	}
+	args := ParseArg(arg)
 
 	return &CommandInput{
-		command, arg,
+		command, args.Args, args.Redirect, args.RedirectTo,
 	}
 }

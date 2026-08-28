@@ -9,7 +9,7 @@ import (
 	"github.com/codecrafters-io/shell-starter-go/app/utils"
 )
 
-func Cd(args []string, ctx utils.Shell) error {
+func Cd(args []string, ctx utils.Shell) (string, error) {
 	arg := args[0]
 
 	var resPath string
@@ -28,8 +28,8 @@ func Cd(args []string, ctx utils.Shell) error {
 	err := os.Chdir(resPath)
 
 	if err != nil {
-		fmt.Printf("cd: %s: No such file or directory\n", arg)
+		return "", fmt.Errorf("cd: %s: No such file or directory\n", arg)
 	}
 
-	return nil
+	return "", nil
 }

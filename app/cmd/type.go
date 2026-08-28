@@ -2,27 +2,36 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/codecrafters-io/shell-starter-go/app/utils"
 )
 
-func Type(args []string, ctx utils.Shell) error {
+func Type(args []string, ctx utils.Shell) (string, error) {
+	outputs := make([]string, 0)
+
 	for _, command := range args {
 		if command == "" {
 			continue
 		}
 
 		if _, exists := ctx[command]; exists {
-			fmt.Printf("%s is a shell builtin\n", command)
+			outputs = append(outputs, fmt.Sprintf("%s is a shell builtin", command))
 		} else {
 			fullPath, err := utils.ExecutablePath(command)
 
 			if err != nil {
-				fmt.Printf("%s: not found\n", command)
+				outputs = append(outputs, fmt.Sprintf("%s: not found", command))
 			} else {
-				fmt.Printf("%s is %s\n", command, fullPath)
+				outputs = append(outputs, fmt.Sprintf("%s is %s", command, fullPath))
 			}
 		}
 	}
-	return nil
+	out := strings.Join(outputs, "\n")
+
+	if len(out) <= 0 {
+		return "", nil
+	}
+
+	return out, nil
 }
