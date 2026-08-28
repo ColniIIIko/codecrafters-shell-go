@@ -111,7 +111,7 @@ func redirectOutput(output string, redirect core.RedirectOutput, to core.Redirec
 	err := os.WriteFile(path, []byte(output), 0644)
 
 	if err != nil {
-		debug("error redirect output  %s\n", err)
+		fmt.Printf("%s\n", err)
 	}
 }
 
@@ -135,7 +135,7 @@ func main() {
 		if commandInput.Redirect != "" {
 			redirectOutput(out, commandInput.Redirect, commandInput.RedirectTo)
 		} else {
-			fmt.Println(out)
+			fmt.Print(out)
 		}
 	}
 }

@@ -49,13 +49,13 @@ func ResolvePath(p string) string {
 
 	if strings.HasPrefix(p, "/") {
 		resPath = p
-	} else if strings.HasPrefix(p, "./") || strings.HasPrefix(p, "../") {
-		curPath, _ := os.Getwd()
-		resPath = path.Join(curPath, p)
 	} else if strings.HasPrefix(p, "~") {
 		homePath, _ := os.UserHomeDir()
 		nextPath, _ := strings.CutSuffix(p, "~")
 		resPath = path.Join(homePath, nextPath)
+	} else {
+		curPath, _ := os.Getwd()
+		resPath = path.Join(curPath, p)
 	}
 
 	return resPath
