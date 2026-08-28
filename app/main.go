@@ -93,7 +93,13 @@ func handleCommand(command string, args []string) (string, error) {
 			debug("Error running %s: %s\n", command, err)
 		}
 
-		return string(out), errors.New(string(errOut))
+		var stdError error = nil
+
+		if len(errOut) >= 1 {
+			stdError = errors.New(string(errOut))
+		}
+
+		return string(out), stdError
 	}
 
 	return fmt.Sprintf("%s: command not found", command), nil
