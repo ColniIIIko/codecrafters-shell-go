@@ -67,7 +67,9 @@ func handleCommand(command string, args []string) (string, error) {
 
 	if cmd, exists := knownCommand[command]; exists {
 		return cmd.Execute(args, knownCommand)
-	} else if execPath, err := utils.ExecutablePath(command); err == nil {
+	}
+
+	if execPath, err := utils.ExecutablePath(command); err == nil {
 		execCommand := execPath
 
 		if path.IsAbs(execPath) {
@@ -102,7 +104,7 @@ func handleCommand(command string, args []string) (string, error) {
 		return string(out), stdError
 	}
 
-	return fmt.Sprintf("%s: command not found", command), nil
+	return fmt.Sprintf("%s: command not found\n", command), nil
 }
 
 func printPrompt() {
