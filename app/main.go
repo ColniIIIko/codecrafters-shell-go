@@ -161,7 +161,7 @@ func main() {
 		if commandInput.Redirect != "" {
 			redirectOutput(out, commandInput.Redirect, commandInput.RedirectTo)
 		} else {
-			fmt.Println(out)
+			fmt.Print(out)
 		}
 
 		if err != nil {
