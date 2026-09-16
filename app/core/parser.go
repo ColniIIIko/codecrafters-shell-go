@@ -30,11 +30,16 @@ type parseConfig struct {
 	keepBackSlash bool
 }
 
+type parseReturn struct {
+	groups       []string
+	cmdLastIndex int
+}
+
 func isQuote(char byte) bool {
 	return char == QUOTE || char == DOUBLE_QUOTE
 }
 
-func parse(arg string, cfg *parseConfig) []string {
+func parse(arg string, cfg *parseConfig) parseReturn {
 	var keepBackSlash = false
 	if cfg != nil {
 		keepBackSlash = cfg.keepBackSlash
@@ -42,6 +47,7 @@ func parse(arg string, cfg *parseConfig) []string {
 	if keepBackSlash {
 	}
 
+	var cmdLastIndex = 0
 	quoteType := byte(QUOTE)
 	insideQuotes := false
 	groups := make([]string, 0)
@@ -75,6 +81,9 @@ func parse(arg string, cfg *parseConfig) []string {
 			insideQuotes = true
 		} else if insideQuotes && isQuote(arg[index]) && arg[index] == quoteType {
 			if group != "" && !(index+1 < len(arg) && arg[index+1] != ' ') {
+				if len(groups) == 0 {
+					cmdLastIndex = index
+				}
 				groups = append(groups, group)
 				group = ""
 			}
@@ -82,6 +91,9 @@ func parse(arg string, cfg *parseConfig) []string {
 		} else if insideQuotes || arg[index] != ' ' {
 			group += string(arg[index])
 		} else if !insideQuotes && arg[index] == ' ' && len(group) > 0 {
+			if len(groups) == 0 {
+				cmdLastIndex = index
+			}
 			groups = append(groups, group)
 			group = ""
 		}
@@ -90,19 +102,26 @@ func parse(arg string, cfg *parseConfig) []string {
 	}
 
 	if group != " " && group != "" {
+		if len(groups) == 0 {
+			cmdLastIndex = index
+		}
 		groups = append(groups, group)
 	}
 
 	if insideQuotes {
 		// has only opening quote
-		return []string{arg}
+		return parseReturn{
+			groups:       []string{arg},
+			cmdLastIndex: 0,
+		}
 	}
 
-	return groups
+	return parseReturn{groups, cmdLastIndex}
 }
 
 func ParseArg(arg string) ArgsParseResponse {
-	args := parse(arg, nil)
+	parseResult := parse(arg, nil)
+	args := parseResult.groups
 
 	res := ArgsParseResponse{
 		Args: args,
@@ -137,12 +156,11 @@ func ParseInput(input string) *CommandInput {
 	}
 
 	if isQuote(input[0]) {
-		groups := parse(input, &parseConfig{
+		parseResult := parse(input, &parseConfig{
 			keepBackSlash: true,
 		})
-		command = groups[0]
-		idx := strings.LastIndex(input, command)
-		arg = input[idx+len(command)+1:]
+		command = parseResult.groups[0]
+		arg = input[parseResult.cmdLastIndex+1:]
 	} else {
 		inputArray := strings.Split(input, " ")
 
