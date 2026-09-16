@@ -39,6 +39,8 @@ func parse(arg string, cfg *parseConfig) []string {
 	if cfg != nil {
 		keepBackSlash = cfg.keepBackSlash
 	}
+	if keepBackSlash {
+	}
 
 	quoteType := byte(QUOTE)
 	insideQuotes := false
