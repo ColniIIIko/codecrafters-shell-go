@@ -168,8 +168,9 @@ func main() {
 			if commandInput.Redirect == core.RedirectOutputERR {
 				redirectOutput(err.Error(), commandInput.Redirect, commandInput.RedirectTo)
 			} else {
-				fmt.Print(err)
+				fmt.Print(err.Error())
 			}
 		}
+
 	}
 }

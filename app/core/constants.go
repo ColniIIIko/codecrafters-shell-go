@@ -8,3 +8,5 @@ const BACKTICK = '`'
 
 const STDOUT_REDIRECT = ">"
 const STDOUT_REDIRECT_NUM = "1>"
+
+const STDERR_REDIRECT = "2>"

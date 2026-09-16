@@ -137,10 +137,16 @@ func ParseArg(arg string) ArgsParseResponse {
 			break
 		}
 
+		if arg == STDERR_REDIRECT {
+			res.Redirect = RedirectOutputERR
+			res.Args = args[:index]
+			break
+		}
+
 		index++
 	}
 
-	if res.Redirect == RedirectOutputOUT {
+	if res.Redirect != "" {
 		res.RedirectTo = RedirectConsumer(strings.Join(args[(index+1):], " "))
 	}
 
