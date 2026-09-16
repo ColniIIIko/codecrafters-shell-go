@@ -61,7 +61,7 @@ func parse(arg string, cfg *parseConfig) []string {
 				continue
 			}
 
-			if insideQuotes && quoteType == DOUBLE_QUOTE && index+1 < len(arg) && keepBackSlash {
+			if insideQuotes && quoteType == DOUBLE_QUOTE && index+1 < len(arg) {
 				group += string(arg[index+1])
 				index += 2
 				continue
