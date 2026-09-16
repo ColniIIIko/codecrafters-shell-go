@@ -158,14 +158,18 @@ func main() {
 		debug("Command Input %s\n", commandInput)
 		debug("Command Output out=%s, err=%s\n", out, err)
 
-		if commandInput.Redirect != "" {
+		if commandInput.Redirect == core.RedirectOutputOUT {
 			redirectOutput(out, commandInput.Redirect, commandInput.RedirectTo)
 		} else {
 			fmt.Print(out)
 		}
 
 		if err != nil {
-			fmt.Print(err)
+			if commandInput.Redirect == core.RedirectOutputERR {
+				redirectOutput(err.Error(), commandInput.Redirect, commandInput.RedirectTo)
+			} else {
+				fmt.Print(err)
+			}
 		}
 	}
 }
