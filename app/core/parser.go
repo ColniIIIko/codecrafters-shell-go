@@ -54,14 +54,14 @@ func parse(arg string, cfg *parseConfig) []string {
 			continue
 		}
 
-		if arg[index] == BACK_SLASH && !keepBackSlash {
+		if arg[index] == BACK_SLASH {
 			if !insideQuotes && index+1 < len(arg) {
 				group += string(arg[index+1])
 				index += 2
 				continue
 			}
 
-			if insideQuotes && quoteType == DOUBLE_QUOTE && index+1 < len(arg) {
+			if insideQuotes && quoteType == DOUBLE_QUOTE && index+1 < len(arg) && keepBackSlash {
 				group += string(arg[index+1])
 				index += 2
 				continue
