@@ -33,5 +33,5 @@ func Type(args []string, ctx utils.Shell) (string, error) {
 		return "", nil
 	}
 
-	return out, nil
+	return fmt.Sprintf("%s\n", out), nil
 }
