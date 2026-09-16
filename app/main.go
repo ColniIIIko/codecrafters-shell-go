@@ -69,6 +69,9 @@ func handleCommand(command string, args []string) (string, error) {
 		return cmd.Execute(args, knownCommand)
 	}
 
+	debugPath, debugErrPath := utils.ExecutablePath(command)
+	debug("Executable=%s, error=%s\n", debugPath, debugErrPath)
+
 	if execPath, err := utils.ExecutablePath(command); err == nil {
 		execCommand := execPath
 
@@ -158,7 +161,7 @@ func main() {
 		if commandInput.Redirect != "" {
 			redirectOutput(out, commandInput.Redirect, commandInput.RedirectTo)
 		} else {
-			fmt.Print(out)
+			fmt.Println(out)
 		}
 
 		if err != nil {

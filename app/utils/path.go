@@ -24,6 +24,7 @@ func ExecutablePath(executable string) (string, error) {
 
 	for pathValue := range strings.SplitSeq(pathEnvValue, string(os.PathListSeparator)) {
 		fullPath := path.Join(pathValue, executable)
+		fmt.Printf("Full path=%s\n", fullPath)
 
 		if IsExecutable(fullPath) {
 			return fullPath, nil
