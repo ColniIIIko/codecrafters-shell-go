@@ -14,5 +14,5 @@ func Pwd(args []string, ctx utils.Shell) (string, error) {
 		return "", fmt.Errorf("pwd error: %s\n", err)
 	}
 
-	return pwd, nil
+	return fmt.Sprintf("s\n", pwd), nil
 }
