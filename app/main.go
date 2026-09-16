@@ -164,12 +164,10 @@ func main() {
 			fmt.Print(out)
 		}
 
-		if err != nil {
-			if commandInput.Redirect == core.RedirectOutputERR {
-				redirectOutput(err.Error(), commandInput.Redirect, commandInput.RedirectTo)
-			} else {
-				fmt.Print(err.Error())
-			}
+		if commandInput.Redirect == core.RedirectOutputERR {
+			redirectOutput(err.Error(), commandInput.Redirect, commandInput.RedirectTo)
+		} else if err != nil {
+			fmt.Print(err.Error())
 		}
 
 	}
